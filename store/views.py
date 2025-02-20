@@ -1,7 +1,8 @@
-from django.shortcuts import render
+from django.shortcuts import render , HttpResponse
 from .models import Products
 from category.models import Category
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404 
+from django.db.models import Q
 from django.core.paginator import EmptyPage , PageNotAnInteger , Paginator
 
 def store(request,category_slug=None):
@@ -40,3 +41,21 @@ def product_detail(request, category_slug, product_slug):
         'single_product' : single_product ,
     }
     return render(request, 'store/product_detail.html',context)
+
+def search(request):
+    products = None
+    products_count = 0
+    
+    if 'key' in request.GET:
+        key = request.GET['key']
+        if key:
+            products = Products.objects.order_by('-created_date').filter(
+                Q(description__icontains=key) | Q(product_name__icontains=key)
+            )
+            products_count = products.count()
+
+    context = {
+        'products': products,
+        'products_count': products_count,
+    }
+    return render(request, 'store/store.html', context)
